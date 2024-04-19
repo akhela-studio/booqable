@@ -1,0 +1,16 @@
+{
+  "name":"akhela/booqable",
+  "version": "0.0.1",
+  "type": "wordpress-plugin",
+  "description": "Edit product on Wordpress",
+  "license": "GPL-3.0-or-later",
+  "autoload": {
+    "psr-4": {
+      "Booqable\\": "src/"
+    }
+  },
+  "require": {
+    "ext-curl": "*",
+    "firebase/php-jwt": "^6.10"
+  }
+}

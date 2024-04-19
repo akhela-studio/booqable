@@ -1,0 +1,16 @@
+.booqable-meta-box{
+    display: flex; align-items: center; justify-content: space-between;
+}
+
+.booqable-user td{
+    display: flex; align-items: center;
+}
+
+.booqable-user td a{
+    margin-left: 16px!important
+}
+
+.settings_page_booqable .form-table input,
+.settings_page_booqable .form-table textarea{
+    width: 50%;
+}
