@@ -27,13 +27,7 @@ class Settings
 
     public function getFields(){
         
-        $this->fields = [
-            'enable'=>[
-                'label'=>__('Enable features', 'booqable'),
-                'fields'=>[
-                ]
-            ]
-        ];
+        $this->fields = [];
 
         if( !$this->configured || !$this->connected){
 
@@ -44,7 +38,6 @@ class Settings
                     'company-id'=>['label'=>__('Company id', 'booqable'), 'type'=>'text'],
                     'single-use-token'=>['label'=>__('Single use Token RS256', 'booqable'), 'type'=>'text'],
                     'token'=>['label'=>__('Token', 'booqable'), 'type'=>'text'],
-                    'private-key'=>['label'=>__('Private key', 'booqable'), 'type'=>'textarea'],
                     'domain'=>['label'=>__('Domain', 'booqable'), 'type'=>'text', 'placeholder'=>'mybrand.booqable.com'],
                 ]
             ]], $this->fields);

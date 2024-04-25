@@ -52,6 +52,6 @@ class ProductGroup
     {
         $product_group = Request::get('/product_groups/'.$id, $fields, 1);
 
-        return $product_group['product_group']??false;
+        return $product_group['product_group']??($product_group['product_groups'][0]??false);
     }
 }

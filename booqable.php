@@ -37,6 +37,8 @@ class Booqable{
 
         new Controller\Editor();
         new Controller\Product();
+
+        add_action('admin_notices', ['\Booqable\Helper\Notice', 'displayErrors']);
     }
 
     public static function isConfigured()

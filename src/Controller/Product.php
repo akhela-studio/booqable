@@ -2,6 +2,7 @@
 
 namespace Booqable\Controller;
 
+use Booqable\Helper\Notice;
 use Booqable\Helper\Options;
 use Booqable\Model\ProductGroup;
 
@@ -103,8 +104,18 @@ class Product
         $thumbnail_id = get_post_thumbnail_id( $post_id );
         $brands = get_the_terms($post_id, 'brand');
         $sizes = get_the_terms($post_id, 'product_size');
+        $photo_base64 = '';
 
         $brand_name = implode(', ', wp_list_pluck($brands, 'name'));
+
+        if( $thumbnail = wp_get_attachment_image_src( $thumbnail_id ) ) {
+
+            $uploads = wp_upload_dir();
+            $thumbnail = str_replace($uploads['baseurl'], $uploads['basedir'], $thumbnail[0]);
+
+            $photo_base64 = 'data:image/png;base64,' . base64_encode(file_get_contents($thumbnail));
+        }
+
 
         $data = [
             "name" => $brand_name.' - '.$post->post_title,
@@ -119,16 +130,10 @@ class Product
             "tag_list" => wp_list_pluck($categories, 'name'),
         ];
 
-        if( $booqable_thumbnail_id != $thumbnail_id){
+        if( $booqable_thumbnail_id != $thumbnail_id && $photo_base64)
+            $data["photo_base64"] = $photo_base64;
 
-            $thumbnail = wp_get_attachment_image_src( $thumbnail_id );
-            $uploads   = wp_upload_dir();
-            $thumbnail = str_replace( $uploads['baseurl'], $uploads['basedir'], $thumbnail[0] );
-
-            $data["photo_base64"] = 'data:image/png;base64,'.base64_encode(file_get_contents($thumbnail));
-        }
-
-        if( count($brands) ){
+        if( $brands && count($brands) ){
 
             $data["properties_attributes"][] = [
                 "identifier"=>'brand',
@@ -136,7 +141,7 @@ class Product
             ];
         }
 
-        if( count($sizes) ){
+        if( $sizes && count($sizes) ){
 
             $data["properties_attributes"][] = [
                 "identifier"=>'size',
@@ -157,26 +162,46 @@ class Product
             ];
         }
 
-        if( $booqable_product_group_id ){
+        try {
 
-            $product_group = ProductGroup::update($booqable_product_group_id, $data);
+            if( $booqable_product_group_id ){
+
+                $product_group = ProductGroup::update($booqable_product_group_id, $data);
+
+                if( $product_group['attributes']['archived'] ){
+
+                    if( $photo_base64)
+                        $data["photo_base64"] = $photo_base64;
+
+                    $product_group = ProductGroup::create($data);
+                }
+            }
+            else{
+
+                $product_group = ProductGroup::create($data);
+            }
+
+            $booqable_product_group_id = $product_group['id'];
+
+            $product = ProductGroup::get($booqable_product_group_id);
+
+            if( $product_id = $product['id']??false ){
+
+                self::set_id($post_id, $product_id);
+                self::set_group_id($post_id, $booqable_product_group_id);
+                self::set_slug($post_id, $product['slug']);
+
+                update_post_meta($post_id, 'booqable_thumbnail_id', $thumbnail_id);
+            }
+            else{
+
+                Notice::addError('Unable to get product');
+            }
         }
-        else{
+        catch (\Throwable $t){
 
-            $product_group = ProductGroup::create($data);
+            Notice::addError($t->getMessage());
         }
-
-        $product = ProductGroup::get($booqable_product_group_id);
-
-
-        if( $product_id = $product['id']??false ){
-
-            self::set_id($post_id, $product_id);
-            self::set_group_id($post_id, $product_group['id']);
-            self::set_slug($post_id, $product['slug']);
-        }
-
-        update_post_meta($post_id, 'booqable_thumbnail_id', $thumbnail_id);
     }
 
     public function manage_product_posts_custom_column( $column, $post_id )
